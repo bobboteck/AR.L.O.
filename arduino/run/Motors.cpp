@@ -1,9 +1,25 @@
+/*
+ * Name          : Motors.cpp
+ * @author       : Roberto D'Amico (Bobboteck)
+ * Last modified : 30.07.2020
+ * Revision      : 1.0.0
+ *
+ * Modification History:
+ * Date         Version     Modified By		Description
+ * 2020-07-30   1.0.0       Roberto D'Amico Created Library
+ * 
+ * ... LICENSE ...
+ *
+ *  This file is part of the .... Project (https://github.com/bobboteck/....).
+ *	Copyright (c) 2020 Roberto D'Amico (Bobboteck).
+ *
+ */
 #include "Motors.hpp"
 
-Motors::Motors()
+Motors::Motors(uint8_t pinMotorRight, uint8_t pinMotorLeft)
 {
-	_MotorL.attach(_MotorLPin);
-	_MotorR.attach(_MotorRPin);
+	_MotorRPin = pinMotorRight;
+	_MotorLPin = pinMotorLeft;
 
 	// center values used for servomotors, loaded from eeprom
 	// if in the eeprom are saved values out of the range 500-2500, 1500 will be used
@@ -19,15 +35,21 @@ Motors::Motors()
 Motors::~Motors()
 {}
 
-void Motors::Avanti(uint16_t vel)
+void Motors::EnableMotors()
 {
-	if(vel > _SpeedMax) vel = _SpeedMax;
-
-	_MotorL.write(_servoL_center + vel);
-	_MotorR.write(_servoR_center - vel);
+	_MotorL.attach(_MotorLPin);
+	_MotorR.attach(_MotorRPin);
 }
 
-void Motors::Indietro(long ms)
+void Motors::Forward(uint16_t speed)
+{
+	if(speed > _SpeedMax) speed = _SpeedMax;
+
+	_MotorL.write(_servoL_center + speed);
+	_MotorR.write(_servoR_center - speed);
+}
+
+void Motors::Backwards(long ms)
 {
 	long timenow = millis();
 
@@ -38,7 +60,7 @@ void Motors::Indietro(long ms)
 	}
 }
 
-void Motors::Destra(long ms)
+void Motors::Right(long ms)
 {
 	long timenow = millis();
 
@@ -49,8 +71,7 @@ void Motors::Destra(long ms)
 	}
 }
 
-
-void Motors::Sinistra(long ms)
+void Motors::Left(long ms)
 {
 	long timenow = millis();
 
@@ -61,8 +82,7 @@ void Motors::Sinistra(long ms)
 	}
 }
 
-
-void Motors::Fermo(long ms)
+void Motors::Stop(long ms)
 {
 	long timenow=millis();
 
@@ -85,7 +105,7 @@ void Motors::Write(Motors::Motor motor, int pulseWidth)
 	}
 }
 
-void Motors::UpdateZeroSpeed(Motor motor, uint16_t value)
+void Motors::SetZeroSpeed(Motor motor, uint16_t value)
 {
 	if(motor == Motor::left)
 	{

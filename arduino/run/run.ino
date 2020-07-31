@@ -74,36 +74,19 @@
 #include <Adafruit_SSD1306.h>
 // Library for Timer1 Interrupts
 #include <TimerOne.h>
-// Library for using servo on Timer 2
-//#include <ServoTimer2.h>
-// Library for Arduino internal eeprom memory
-//#include <EEPROM.h>
 
 #include "Motors.hpp"
 
 // Arduino used pins
-//#define MotorRPin 9       // signal for right servomotor
-//#define MotorLPin 10      // signal for left servomotor
+#define MotorRPin 9       // signal for right servomotor
+#define MotorLPin 10      // signal for left servomotor
 #define P1 6              // pushbutton P1
 #define P2 7              // pushbutton P2
 #define trigPin 8         // HC-SR04 - trigger
 #define echoPin 2         // HC-SR04 - echo
-/*
-// stuff used by servomotors
-ServoTimer2 MotorL;       // left servomotor object
-ServoTimer2 MotorR;       // right servomotor object
-uint16_t servoL_center=1500; // default value for left servomotor center point
-uint16_t servoR_center=1500; // default value for right servomotor center point
-uint8_t servoL_eeprom=0; // eeprom memory location for storing point zero of left servomotor
-uint8_t servoR_eeprom=2; // eeprom memory location for storing point zero of right servomotor
-*/
+
 #define SPEED  200 // normal speed for forward moving (center point+speed microseconds)
 #define SPEED_SLOW 50 // speed used for maneuvers
-
-uint16_t servoL_center=1500; // default value for left servomotor center point
-uint16_t servoR_center=1500; // default value for right servomotor center point
-uint8_t servoL_eeprom=0; // eeprom memory location for storing point zero of left servomotor
-uint8_t servoR_eeprom=2; // eeprom memory location for storing point zero of right servomotor
 
 // stuff used by sonar
 #define SONAR_ECHO_INTERRUPT_ID 0 // Arduino UNO interrupt ID on echoPin (2)
@@ -117,7 +100,7 @@ uint8_t servoR_eeprom=2; // eeprom memory location for storing point zero of rig
 #define OLED_RESET -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-Motors ArloMotors;
+Motors ArloMotors(MotorRPin, MotorLPin);
 
 // Global variables
 volatile long distance=0; // distance measured by sonar, cm
@@ -141,9 +124,9 @@ void setup()
 	// sonar setup
 	pinMode(trigPin, OUTPUT);
 	pinMode(echoPin, INPUT);
-	// servomotors setup
-	//MotorL.attach(MotorLPin);   
-	//MotorR.attach(MotorRPin);
+
+	ArloMotors.EnableMotors();
+
 	// pushbotton setup
 	pinMode(P1,INPUT_PULLUP);
 	pinMode(P2,INPUT_PULLUP);
@@ -170,19 +153,7 @@ void setup()
 
 	Serial.println("ARLO Startup");
 
-	// center values used for servomotors, loaded from eeprom
-	// if in the eeprom are saved values out of the range 500-2500, 1500 will be used
-	// (this happens when eeprom memory was never used since contains 0xFFFF value)
-/*
-	uint16_t LV=EEPROM.read(servoL_eeprom)<<8;
-	LV|=EEPROM.read(servoL_eeprom+1);
-	uint16_t RV=EEPROM.read(servoR_eeprom)<<8;
-	RV|=EEPROM.read(servoR_eeprom+1);
-	if (LV<2501 && LV>499) servoL_center=LV;
-	if (RV<2501 && RV>499) servoR_center=RV;
-*/
-
-	ArloMotors.Fermo(100);
+	ArloMotors.Stop(100);
 
 	// if P1 is pressed during the setup function, I'll start the setup mode
 	if (digitalRead(P1)==0) 
@@ -203,10 +174,11 @@ void loop()
 
 	if (juststarted)
 	{
-		ArloMotors.Fermo(100);
+		Serial.println("Setup mode");
+		ArloMotors.Stop(100);
 		display.println("WAIT");
 		display.display(); 
-		ArloMotors.Fermo(2000); // servomotors stopped while sonar goes stable
+		ArloMotors.Stop(2000); // servomotors stopped while sonar goes stable
 		juststarted=false;  
 	}
 
@@ -227,39 +199,34 @@ void loop()
 	// distance is greater than obstacle
 	if(distance>OBSTACLE)
 	{
-		//dritto(SPEED);
-		ArloMotors.Avanti(SPEED);
+		ArloMotors.Forward(SPEED);
 	}
 	else
 	{
 		uint8_t randomNum=random(0,1);
 		Serial.println("stop");
 		// deceleration
-		//dritto(SPEED-50);
-		ArloMotors.Avanti(SPEED-50);
+		ArloMotors.Forward(SPEED-50);
 		delay(100);
-		//dritto(SPEED-100);
-		ArloMotors.Avanti(SPEED-100);
+		ArloMotors.Forward(SPEED-100);
 		delay(100);
-		//dritto(SPEED-150);
-		ArloMotors.Avanti(SPEED-150);
+		ArloMotors.Forward(SPEED-150);
 		delay(100);
 		// stop
-		//fermo(100);
-		ArloMotors.Fermo(100);
-		ArloMotors.Indietro(1000);
-		ArloMotors.Fermo(100);
+		ArloMotors.Stop(100);
+		ArloMotors.Backwards(1000);
+		ArloMotors.Stop(100);
 
 		if (randomNum)
 		{
-			ArloMotors.Destra(1000);
+			ArloMotors.Right(1000);
 		}
 		else
 		{
-			ArloMotors.Sinistra(1000);
+			ArloMotors.Left(1000);
 		}
 
-		ArloMotors.Fermo(100);
+		ArloMotors.Stop(100);
 	}
 }
 
@@ -290,9 +257,9 @@ void config_menu(void)
 		case left_motor: // left servomotor setup
 			display.setCursor(0,0);
 			display.setTextSize(1);
-			display.print("LEFT MOTOR (");
+			/*display.print("LEFT MOTOR (");
 			display.print(servoL_center);
-			display.println(")");
+			display.println(")");*/
 			display.setTextSize(2);
 			display.print(pos);
 			display.print("  ");
@@ -300,16 +267,16 @@ void config_menu(void)
 			display.setTextSize(1);
 			display.print("P1: save P2: next");
 			display.display();  
-			//MotorL.write(pos);
+
 			ArloMotors.Write(ArloMotors.left, pos);
 		break;
 
 		case right_motor: // right servomotor setup
 			display.setCursor(0,0);
 			display.setTextSize(1);
-			display.print("RIGHT MOTOR (");
+			/*display.print("RIGHT MOTOR (");
 			display.print(servoR_center);
-			display.println(")");
+			display.println(")");*/
 			display.setTextSize(2);
 			display.print(pos);
 			display.print("  ");
@@ -317,7 +284,7 @@ void config_menu(void)
 			display.setTextSize(1);
 			display.print("P1: save P2: next");
 			display.display();  
-			//MotorR.write(pos);
+
 			ArloMotors.Write(ArloMotors.right, pos);
 		break;
 
@@ -341,30 +308,14 @@ void config_menu(void)
 			switch(actual_page)
 			{
 				case 0:
-					servoL_center=pos;
-					// I must split the 16bit value in two bytes
-					// and save values in 2 different EEPROM locations
-					/*EEPROM.update(servoL_eeprom, (uint8_t)(pos>>8));
-					delay(4); // an eeprom.write takes 3.3mS
-					EEPROM.update(servoL_eeprom+1, (uint8_t)(pos&0x00FF));
-					delay(4);*/
-
-					ArloMotors.UpdateZeroSpeed(ArloMotors.left, pos);
+					ArloMotors.SetZeroSpeed(ArloMotors.left, pos);
 
 					Serial.print("Left zero: ");
 					Serial.println(pos);
 				break;
 
 				case 1:
-					servoR_center = pos;
-					// I must split the 16bit value in two bytes
-					// and save values in 2 different EEPROM locations
-					/*EEPROM.update(servoR_eeprom, (uint8_t)(pos>>8));
-					delay(4); // an eeprom.write takes 3.3mS
-					EEPROM.update(servoR_eeprom+1, (uint8_t)(pos&0x00FF));
-					delay(4);*/
-
-					ArloMotors.UpdateZeroSpeed(ArloMotors.right, pos);
+					ArloMotors.SetZeroSpeed(ArloMotors.right, pos);
 
 					Serial.print("Right zero: ");
 					Serial.println(pos);
@@ -402,60 +353,6 @@ void config_menu(void)
 		}
 	}
 }
-
-/*  
-// moves forward at 'vel' speed
-void dritto(uint16_t vel)
-  {
-  if (vel>SPEED) vel=SPEED;
-  MotorL.write(servoL_center+vel);
-  MotorR.write(servoR_center-vel);
-  }
-
-// moves backward at slow speed for ms milliseconds
-void indietro(long ms)
-  {
-  long timenow=millis();
-  while((millis()-timenow)<ms)
-    {
-    MotorL.write(servoL_center-SPEED_SLOW);
-    MotorR.write(servoR_center+SPEED_SLOW);
-    }
-  }
-
-// turns right at slow speed for ms milliseconds
-void destra(long ms)
-  {
-  long timenow=millis();
-  while((millis()-timenow)<ms)
-    {
-    MotorL.write(servoL_center+SPEED_SLOW);
-    MotorR.write(servoR_center+SPEED_SLOW);
-    }
-  }
-
-// turns left at slow speed for ms milliseconds
-void sinistra(long ms)
-  {
-  long timenow=millis();
-  while((millis()-timenow)<ms)
-    {
-    MotorL.write(servoL_center-SPEED_SLOW);
-    MotorR.write(servoR_center-SPEED_SLOW);
-    }
-  }
-
-// Servomotors stopped
-void fermo(long ms)
-  {
-  long timenow=millis();
-  while((millis()-timenow)<ms)
-    {
-    MotorL.write(servoL_center);
-    MotorR.write(servoR_center);
-    }
-  }
-*/
   
 // Timer1 every 50uS : sends the pulse signal
 void timer1_ISR()
