@@ -7,6 +7,8 @@
  * https://www.github.com/CyB3rn0id/ar.l.o.
  * https://www.settorezero.com/wordpress/arlo
  * 
+ * This code is partially rewritten by Roberto D'Amico (@bobboteck) [https://github.com/bobboteck/AR.L.O.]
+ * 
  * WARNING
  * This example will not work on Arduino LEONARDO
  * since it hasn't the Timer2
@@ -121,15 +123,15 @@ enum config_pages
   
 void setup() 
 {
-	// sonar setup
+	// Sonar pin setup
 	pinMode(trigPin, OUTPUT);
 	pinMode(echoPin, INPUT);
-
-	ArloMotors.EnableMotors();
-
-	// pushbotton setup
+	// Pushbotton pin setup
 	pinMode(P1,INPUT_PULLUP);
 	pinMode(P2,INPUT_PULLUP);
+
+	ArloMotors.EnableMotors();
+	ArloMotors.Stop();
 
 	// interrupts
 	Timer1.initialize(TIMER_US); // Initialise timer 1
@@ -153,7 +155,7 @@ void setup()
 
 	Serial.println("ARLO Startup");
 
-	ArloMotors.Stop(100);
+	//ArloMotors.Stop(100);
 
 	// if P1 is pressed during the setup function, I'll start the setup mode
 	if (digitalRead(P1)==0) 

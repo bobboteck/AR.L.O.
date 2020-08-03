@@ -1,11 +1,12 @@
 /*
  * Name          : Motors.hpp
  * @author       : Roberto D'Amico (Bobboteck)
- * Last modified : 30.07.2020
- * Revision      : 1.0.0
+ * Last modified : 03.08.2020
+ * Revision      : 1.1.0
  *
  * Modification History:
  * Date         Version     Modified By		Description
+ * 2020-08-03	1.1.0		Roberto D'Amico	Add new method Stop
  * 2020-07-30   1.0.0       Roberto D'Amico Created Library
  * 
  * ... LICENSE ...
@@ -91,6 +92,11 @@ class Motors
 		 * @param ms The number of milliseconds
 		 */
 		void Stop(long ms);
+
+		/**
+		 * Stop the Robot
+		 */
+		void Stop();
 
 		/**
 		 * Set the pulse width in microseconds for a specific Motor

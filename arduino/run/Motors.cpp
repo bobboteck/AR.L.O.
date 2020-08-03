@@ -1,11 +1,12 @@
 /*
  * Name          : Motors.cpp
  * @author       : Roberto D'Amico (Bobboteck)
- * Last modified : 30.07.2020
- * Revision      : 1.0.0
+ * Last modified : 03.08.2020
+ * Revision      : 1.1.0
  *
  * Modification History:
  * Date         Version     Modified By		Description
+ * 2020-08-03	1.1.0		Roberto D'Amico	Add new method Stop
  * 2020-07-30   1.0.0       Roberto D'Amico Created Library
  * 
  * ... LICENSE ...
@@ -91,6 +92,12 @@ void Motors::Stop(long ms)
 		_MotorL.write(_servoL_center);
 		_MotorR.write(_servoR_center);
 	}
+}
+
+void Motors::Stop()
+{
+	_MotorL.write(_servoL_center);
+	_MotorR.write(_servoR_center);
 }
 
 void Motors::Write(Motors::Motor motor, int pulseWidth)
