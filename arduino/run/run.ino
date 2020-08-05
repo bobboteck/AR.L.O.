@@ -196,7 +196,7 @@ void loop()
 		display.print("cm       ");
 	}
 
-	display.display();  
+	display.display();
 
 	// distance is greater than obstacle
 	if(distance>OBSTACLE)

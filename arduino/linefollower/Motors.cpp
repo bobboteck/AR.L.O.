@@ -50,7 +50,7 @@ void Motors::Forward(uint16_t speed)
 	_MotorR.write(_servoR_center - speed);
 }
 
-void Forward(uint16_t speedLeft, uint16_t speedRight)
+void Motors::Forward(uint16_t speedLeft, uint16_t speedRight)
 {
 	if(speedLeft > _SpeedMax) speedLeft = _SpeedMax;
 	if(speedRight > _SpeedMax) speedRight = _SpeedMax;
